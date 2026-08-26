@@ -149,10 +149,7 @@ export default function ReadAloud({ content, language }: ReadAloudProps) {
     
     // Split text into chunks (sentences or small paragraphs) to prevent browser synthesis timeout/errors
     // Matches sequences ending in ., !, or ? or falls back to splitting by newlines if no punctuation
-    let chunks = textWithIntro.match(/[^.!?]+[.!?]+/g);
-    if (!chunks) {
-      chunks = textWithIntro.split('\n');
-    }
+    let chunks: string[] = textWithIntro.match(/[^.!?]+[.!?]+/g) ?? textWithIntro.split('\n');
     
     chunksRef.current = chunks.map(c => c.trim()).filter(Boolean);
     currentChunkIndex.current = 0;
