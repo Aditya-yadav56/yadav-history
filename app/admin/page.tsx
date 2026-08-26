@@ -63,6 +63,9 @@ const STATE_OPTIONS = [
 
 export default function AdminPage() {
   const [session, setSession] = useState<any>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginMsg, setLoginMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'articles' | 'manage_articles' | 'add_article' | 'timeline' | 'historical_sites'>('articles');
 
   // Articles state (Pending)
@@ -122,7 +125,20 @@ export default function AdminPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginMsg('');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoginMsg(`Error: ${error.message}`);
+    }
+  };
 
   useEffect(() => {
     if (session) {
@@ -475,12 +491,41 @@ export default function AdminPage() {
   };
 
   const ADMIN_EMAIL = 'amaraavathifocus@gmail.com';
-  if (!session || session.user?.email !== ADMIN_EMAIL) {
+
+  if (!session) {
     return (
-      <div className="text-center py-20 font-black text-xl text-black uppercase tracking-widest">
+      <div className="max-w-md mx-auto mt-20 p-10 bg-white border-2 border-black rounded-none">
+        <h2 className="text-4xl font-black text-center mb-10 text-black uppercase tracking-tighter">
+          Admin Login
+        </h2>
+        <form onSubmit={handleLogin} className="space-y-8">
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-black mb-2">Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+              className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors" />
+          </div>
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-black mb-2">Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
+              className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors" />
+          </div>
+          {loginMsg && <p className="text-black bg-gray-100 border-l-4 border-black p-3 text-sm font-bold">{loginMsg}</p>}
+          <button type="submit" className="w-full bg-black border-2 border-black text-white font-black uppercase tracking-widest py-4 hover:bg-white hover:text-black transition-colors">
+            Sign In
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (session.user?.email !== ADMIN_EMAIL) {
+    return (
+      <div className="text-center py-20 font-black text-xl text-black uppercase tracking-widest bg-white border-2 border-black max-w-md mx-auto mt-20 p-10 rounded-none">
         Access Denied. You do not have admin privileges.
         <div className="mt-8">
-          <button onClick={() => supabase.auth.signOut()} className="text-sm border-b-2 border-black pb-1 hover:border-transparent transition-colors">Sign Out</button>
+          <button onClick={() => supabase.auth.signOut()} className="bg-black text-white border-2 border-black font-black uppercase tracking-widest py-3 px-6 hover:bg-white hover:text-black transition-colors">
+            Sign Out
+          </button>
         </div>
       </div>
     );
