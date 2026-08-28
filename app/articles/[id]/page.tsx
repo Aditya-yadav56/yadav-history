@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import ReadAloud from '@/components/ReadAloud';
 
@@ -56,6 +56,7 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
   const id = unwrappedParams.id;
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -87,6 +88,34 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
     fetchArticle();
   }, [id]);
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: article?.title || 'Yadav History India',
+          text: `Read about "${article?.title}" on Yadav History India`,
+          url: url,
+        });
+      } catch (err) {
+        // user cancelled or share failed, fallback to copy
+        copyToClipboard(url);
+      }
+    } else {
+      copyToClipboard(url);
+    }
+  };
+
+  const copyToClipboard = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-widest text-xl animate-pulse">Loading...</div>;
   }
@@ -108,9 +137,18 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
           <Link href="/articles" className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-widest hover:text-gray-600 transition-colors mb-8 border border-black px-3 py-1 bg-black text-white hover:bg-white hover:text-black">
             <ArrowLeft className="w-4 h-4" /> Back to Archive
           </Link>
-          <div className="flex gap-3 mb-6">
-            <span className="border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest">{article.category}</span>
-            <span className="bg-black text-white px-3 py-1 text-xs font-black uppercase tracking-widest">{article.language}</span>
+          <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
+            <div className="flex gap-3">
+              <span className="border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-widest">{article.category}</span>
+              <span className="bg-black text-white px-3 py-1 text-xs font-black uppercase tracking-widest">{article.language}</span>
+            </div>
+            <button 
+              onClick={handleShare}
+              className="flex items-center gap-2 border-2 border-black bg-white px-4 py-1 text-xs font-black uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              {shared ? 'Copied Link!' : 'Share'}
+            </button>
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-black leading-none tracking-tighter mb-6">{article.title}</h1>
           <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">
