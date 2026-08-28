@@ -89,6 +89,7 @@ export default function HistoricalPlacesPage() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [placesLoading, setPlacesLoading] = useState(true);
   const [selectedStateId, setSelectedStateId] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [hoveredPlace, setHoveredPlace] = useState<string | null>(null);
   const [svgContent, setSvgContent] = useState<string>('');
@@ -116,9 +117,12 @@ export default function HistoricalPlacesPage() {
     loadSites();
   }, []);
 
-  const filteredPlaces = selectedStateId === 'ALL'
-    ? places
-    : places.filter(p => p.stateId === selectedStateId);
+  const filteredPlaces = places.filter(p => {
+    const matchesState = selectedStateId === 'ALL' || p.stateId === selectedStateId;
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesState && matchesSearch;
+  });
 
   // Fetch the real SVG
   useEffect(() => {
@@ -191,38 +195,57 @@ export default function HistoricalPlacesPage() {
 
         {/* Sidebar */}
         <div className="lg:w-52 flex-shrink-0">
-          <div className="bg-white border-2 border-black sticky top-20">
-            <div className="border-b-2 border-black px-4 py-3 bg-black text-white">
-              <h3 className="font-black uppercase tracking-widest text-xs">Filter by State</h3>
-            </div>
-            {FEATURED_STATES.map(({ id, label }) => (
-              <button key={id} onClick={() => { setSelectedStateId(id); setSelectedPlace(null); }}
-                className={`w-full text-left px-4 py-3 text-sm font-bold border-b border-gray-100 transition-colors flex items-center justify-between
-                  ${selectedStateId === id ? 'bg-black text-white' : 'hover:bg-gray-50 text-gray-800'}`}>
-                {label}
-                {selectedStateId === id && <ChevronRight className="w-3 h-3" />}
-              </button>
-            ))}
-            <div className="px-4 py-3">
-              <div className="text-xs font-black uppercase tracking-widest text-gray-400">
-                {placesLoading ? 'Loading...' : `${filteredPlaces.length} place${filteredPlaces.length !== 1 ? 's' : ''}`}
-              </div>
+          <div className="sticky top-20 space-y-4">
+            
+            {/* Search Box */}
+            <div className="bg-white border-2 border-black p-4">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-black mb-2">Search Places</label>
+              <input 
+                type="text" 
+                placeholder="TYPE TO SEARCH..." 
+                value={searchQuery}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  setSelectedPlace(null);
+                }}
+                className="w-full px-3 py-2 text-xs border-2 border-black bg-white text-black font-bold uppercase tracking-widest focus:outline-none placeholder-gray-400"
+              />
             </div>
 
-            {/* Legend */}
-            <div className="border-t-2 border-black px-4 py-4 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-black mb-2">Legend</p>
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
-                <div className="w-4 h-4 bg-[#c8c2bc] border border-black flex-shrink-0"></div>
-                Yadava Region
+            {/* Filter by State */}
+            <div className="bg-white border-2 border-black">
+              <div className="border-b-2 border-black px-4 py-3 bg-black text-white">
+                <h3 className="font-black uppercase tracking-widest text-xs">Filter by State</h3>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
-                <div className="w-4 h-4 bg-black flex-shrink-0"></div>
-                Selected State
+              {FEATURED_STATES.map(({ id, label }) => (
+                <button key={id} onClick={() => { setSelectedStateId(id); setSelectedPlace(null); }}
+                  className={`w-full text-left px-4 py-3 text-sm font-bold border-b border-gray-100 transition-colors flex items-center justify-between
+                    ${selectedStateId === id ? 'bg-black text-white' : 'hover:bg-gray-50 text-gray-800'}`}>
+                  {label}
+                  {selectedStateId === id && <ChevronRight className="w-3 h-3" />}
+                </button>
+              ))}
+              <div className="px-4 py-3">
+                <div className="text-xs font-black uppercase tracking-widest text-gray-400">
+                  {placesLoading ? 'Loading...' : `${filteredPlaces.length} place${filteredPlaces.length !== 1 ? 's' : ''}`}
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
-                <div className="w-4 h-4 rounded-full bg-white border-2 border-black flex-shrink-0"></div>
-                Historical Site
+
+              {/* Legend */}
+              <div className="border-t-2 border-black px-4 py-4 space-y-2">
+                <p className="text-xs font-black uppercase tracking-widest text-black mb-2">Legend</p>
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                  <div className="w-4 h-4 bg-[#c8c2bc] border border-black flex-shrink-0"></div>
+                  Yadava Region
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                  <div className="w-4 h-4 bg-black flex-shrink-0"></div>
+                  Selected State
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                  <div className="w-4 h-4 rounded-full bg-white border-2 border-black flex-shrink-0"></div>
+                  Historical Site
+                </div>
               </div>
             </div>
           </div>

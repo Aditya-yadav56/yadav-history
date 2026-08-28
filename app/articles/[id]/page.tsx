@@ -57,6 +57,19 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [shared, setShared] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const progress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(progress);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -131,6 +144,14 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
 
   return (
     <article className="min-h-screen bg-[#dedad7] pb-24">
+      {/* Reading Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-1 bg-black/10 z-[60]">
+        <div 
+          className="h-full bg-black transition-all duration-75 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
       {/* Hero Header */}
       <div className="bg-white border-b-2 border-black pt-12 pb-16 px-4">
         <div className="max-w-4xl mx-auto">

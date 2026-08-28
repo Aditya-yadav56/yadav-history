@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { Search } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -17,8 +18,12 @@ type Article = {
   image_url: string;
 };
 
+const CATEGORIES = ['All', 'Yadav Kings', 'Historical Places', 'Culture & Art', 'Other'];
+
 export default function ArticlesPage() {
   const [activeLanguage, setActiveLanguage] = useState('English');
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,9 +52,21 @@ export default function ArticlesPage() {
     fetchArticles();
   }, [activeLanguage]);
 
+  // Client-side filtering combining category + search query
+  const filteredArticles = articles.filter((article) => {
+    const matchesCategory = activeCategory === 'All' || article.category === activeCategory;
+    const matchesSearch = 
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   useGSAP(() => {
     if (loading) return;
     
+    // Kill existing triggers before creating new ones on filter update
+    ScrollTrigger.getAll().forEach(t => t.kill());
+
     gsap.fromTo('.article-card',
       { y: 50, opacity: 0 },
       {
@@ -61,7 +78,7 @@ export default function ArticlesPage() {
         }
       }
     );
-  }, { scope: containerRef, dependencies: [articles, loading] });
+  }, { scope: containerRef, dependencies: [filteredArticles, loading] });
 
   return (
     <div ref={containerRef} className="max-w-7xl mx-auto px-4 py-12 w-full min-h-screen">
@@ -69,28 +86,73 @@ export default function ArticlesPage() {
         Articles Archive
       </h1>
       
-      {/* Language Tabs */}
-      <div className="flex justify-center gap-4 mb-16">
-        {['English', 'Hindi', 'Telugu'].map((lang) => (
-          <button
-            key={lang}
-            onClick={() => setActiveLanguage(lang)}
-            className={`px-8 py-2 font-black border-2 border-black uppercase tracking-widest transition-colors ${
-              activeLanguage === lang 
-                ? 'bg-black text-white'
-                : 'bg-white text-black hover:bg-gray-100'
-            }`}
-          >
-            {lang}
-          </button>
-        ))}
+      {/* Controls: Search, Language, Category */}
+      <div className="space-y-6 mb-16 max-w-4xl mx-auto">
+        {/* Search Bar */}
+        <div className="relative border-2 border-black bg-white">
+          <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-black" />
+          </span>
+          <input
+            type="text"
+            placeholder="SEARCH STORIES..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 text-sm font-black uppercase tracking-widest text-black focus:outline-none placeholder-gray-400"
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+          {/* Language Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {['English', 'Hindi', 'Telugu'].map((lang) => (
+              <button
+                key={lang}
+                onClick={() => {
+                  setActiveLanguage(lang);
+                  // Reset search/category filters on language swap
+                  setActiveCategory('All');
+                  setSearchQuery('');
+                }}
+                className={`px-6 py-2 text-xs font-black border-2 border-black uppercase tracking-widest transition-colors ${
+                  activeLanguage === lang 
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+
+          {/* Category Tabs */}
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-2 text-[10px] font-black border-2 border-black uppercase tracking-widest transition-colors ${
+                  activeCategory === cat 
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center py-20 text-xl font-bold uppercase tracking-widest text-black animate-pulse">Loading...</div>
+      ) : filteredArticles.length === 0 ? (
+        <div className="text-center py-20 bg-white border-2 border-black">
+          <p className="text-lg font-black uppercase tracking-widest">No articles found matching your criteria.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {articles.map((article) => (
+          {filteredArticles.map((article) => (
             <Link href={`/articles/${article.id}`} key={article.id} className="article-card group bg-white border-2 border-black flex flex-col cursor-pointer hover:bg-gray-50 transition-colors">
               {article.image_url ? (
                 <div className="relative h-56 border-b-2 border-black overflow-hidden bg-gray-200">
