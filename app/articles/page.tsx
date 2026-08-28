@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
+import CustomSelect from '@/components/CustomSelect';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,6 +17,8 @@ type Article = {
   language: string;
   category: string;
   image_url: string;
+  created_at: string;
+  reads: number;
 };
 
 const CATEGORIES = ['All', 'Yadav Kings', 'Historical Places', 'Culture & Art', 'Other'];
@@ -23,6 +26,7 @@ const CATEGORIES = ['All', 'Yadav Kings', 'Historical Places', 'Culture & Art', 
 export default function ArticlesPage() {
   const [activeLanguage, setActiveLanguage] = useState('English');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'most_read'>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,9 +46,9 @@ export default function ArticlesPage() {
       } else {
         // Dummy data for testing UI
         setArticles([
-          { id: 'dummy1', title: 'The Great Kings of Yadava', content: 'Explore the vast empire...', category: 'Yadav Kings', image_url: 'https://images.unsplash.com/photo-1599557626941-0f73f2fb7c34?w=800', language: activeLanguage },
-          { id: 'dummy2', title: 'Architecture of Devagiri', content: 'The impregnable fort...', category: 'Historical Places', image_url: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=800', language: activeLanguage },
-          { id: 'dummy3', title: 'Art & Literature', content: 'Patronage of Marathi...', category: 'Culture & Art', image_url: 'https://images.unsplash.com/photo-1623869680517-578c7923485b?w=800', language: activeLanguage },
+          { id: 'dummy1', title: 'The Great Kings of Yadava', content: 'Explore the vast empire...', category: 'Yadav Kings', image_url: 'https://images.unsplash.com/photo-1599557626941-0f73f2fb7c34?w=800', language: activeLanguage, reads: 120, created_at: '2026-08-20T12:00:00.000Z' },
+          { id: 'dummy2', title: 'Architecture of Devagiri', content: 'The impregnable fort...', category: 'Historical Places', image_url: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=800', language: activeLanguage, reads: 340, created_at: '2026-08-22T12:00:00.000Z' },
+          { id: 'dummy3', title: 'Art & Literature', content: 'Patronage of Marathi...', category: 'Culture & Art', image_url: 'https://images.unsplash.com/photo-1623869680517-578c7923485b?w=800', language: activeLanguage, reads: 85, created_at: '2026-08-18T12:00:00.000Z' },
         ]);
       }
       setLoading(false);
@@ -59,6 +63,20 @@ export default function ArticlesPage() {
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.content.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
+  });
+
+  // Client-side sorting
+  const sortedArticles = [...filteredArticles].sort((a, b) => {
+    if (sortBy === 'newest') {
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    }
+    if (sortBy === 'oldest') {
+      return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    }
+    if (sortBy === 'most_read') {
+      return (b.reads || 0) - (a.reads || 0);
+    }
+    return 0;
   });
 
   useGSAP(() => {
@@ -78,7 +96,7 @@ export default function ArticlesPage() {
         }
       }
     );
-  }, { scope: containerRef, dependencies: [filteredArticles, loading] });
+  }, { scope: containerRef, dependencies: [sortedArticles, loading] });
 
   return (
     <div ref={containerRef} className="max-w-7xl mx-auto px-4 py-12 w-full min-h-screen">
@@ -103,26 +121,41 @@ export default function ArticlesPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-          {/* Language Tabs */}
-          <div className="flex flex-wrap gap-2">
-            {['English', 'Hindi', 'Telugu'].map((lang) => (
-              <button
-                key={lang}
-                onClick={() => {
-                  setActiveLanguage(lang);
-                  // Reset search/category filters on language swap
-                  setActiveCategory('All');
-                  setSearchQuery('');
-                }}
-                className={`px-6 py-2 text-xs font-black border-2 border-black uppercase tracking-widest transition-colors ${
-                  activeLanguage === lang 
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-              >
-                {lang}
-              </button>
-            ))}
+          {/* Language & Sort Tabs Container */}
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Language Tabs */}
+            <div className="flex flex-wrap gap-2">
+              {['English', 'Hindi', 'Telugu'].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => {
+                    setActiveLanguage(lang);
+                    // Reset search/category filters on language swap
+                    setActiveCategory('All');
+                    setSearchQuery('');
+                  }}
+                  className={`px-6 py-2 text-xs font-black border-2 border-black uppercase tracking-widest transition-colors ${
+                    activeLanguage === lang 
+                      ? 'bg-black text-white'
+                      : 'bg-white text-black hover:bg-gray-100'
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort Dropdown */}
+            <CustomSelect
+              variant="box"
+              value={sortBy}
+              onChange={(val) => setSortBy(val as any)}
+              options={[
+                { value: 'newest', label: 'Sort: Newest' },
+                { value: 'oldest', label: 'Sort: Oldest' },
+                { value: 'most_read', label: 'Sort: Most Reads' },
+              ]}
+            />
           </div>
 
           {/* Category Tabs */}
@@ -146,13 +179,13 @@ export default function ArticlesPage() {
 
       {loading ? (
         <div className="text-center py-20 text-xl font-bold uppercase tracking-widest text-black animate-pulse">Loading...</div>
-      ) : filteredArticles.length === 0 ? (
+      ) : sortedArticles.length === 0 ? (
         <div className="text-center py-20 bg-white border-2 border-black">
           <p className="text-lg font-black uppercase tracking-widest">No articles found matching your criteria.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredArticles.map((article) => (
+          {sortedArticles.map((article) => (
             <Link href={`/articles/${article.id}`} key={article.id} className="article-card group bg-white border-2 border-black flex flex-col cursor-pointer hover:bg-gray-50 transition-colors">
               {article.image_url ? (
                 <div className="relative h-56 border-b-2 border-black overflow-hidden bg-gray-200">
@@ -164,8 +197,13 @@ export default function ArticlesPage() {
                 </div>
               )}
               <div className="p-6 flex flex-col flex-grow">
-                <div className="text-xs font-black text-black mb-3 uppercase tracking-widest border border-black inline-block px-2 py-1 self-start">
-                  {article.category}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="text-xs font-black text-black uppercase tracking-widest border border-black inline-block px-2 py-1 self-start">
+                    {article.category}
+                  </div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-100 px-2 py-1 border border-black/10 self-start">
+                    {article.reads || 0} Reads
+                  </div>
                 </div>
                 <h3 className="text-2xl font-black text-black mb-4 leading-tight tracking-tight group-hover:underline underline-offset-4 decoration-4">
                   {article.title}

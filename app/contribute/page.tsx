@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { UploadCloud, X, CheckCircle } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import CustomSelect from '@/components/CustomSelect';
 
 export default function ContributePage() {
   const [session, setSession] = useState<any>(null);
@@ -179,22 +180,28 @@ export default function ContributePage() {
           <div className="flex gap-8 flex-col sm:flex-row">
             <div className="flex-1">
               <label className="block text-xs font-black uppercase tracking-widest text-black mb-2">Language</label>
-              <select value={language} onChange={e => setLanguage(e.target.value)}
-                className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none rounded-none font-bold">
-                <option>English</option>
-                <option>Hindi</option>
-                <option>Telugu</option>
-              </select>
+              <CustomSelect
+                value={language}
+                onChange={setLanguage}
+                options={[
+                  { value: 'English', label: 'English' },
+                  { value: 'Hindi', label: 'Hindi' },
+                  { value: 'Telugu', label: 'Telugu' },
+                ]}
+              />
             </div>
             <div className="flex-1">
               <label className="block text-xs font-black uppercase tracking-widest text-black mb-2">Category</label>
-              <select value={category} onChange={e => setCategory(e.target.value)}
-                className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none rounded-none font-bold">
-                <option>Yadav Kings</option>
-                <option>Historical Places</option>
-                <option>Culture & Art</option>
-                <option>Other</option>
-              </select>
+              <CustomSelect
+                value={category}
+                onChange={setCategory}
+                options={[
+                  { value: 'Yadav Kings', label: 'Yadav Kings' },
+                  { value: 'Historical Places', label: 'Historical Places' },
+                  { value: 'Culture & Art', label: 'Culture & Art' },
+                  { value: 'Other', label: 'Other' },
+                ]}
+              />
             </div>
           </div>
 

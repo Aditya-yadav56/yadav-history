@@ -7,6 +7,7 @@ export default function CustomScrollbar() {
   const [scrollPercent, setScrollPercent] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   const trackRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
@@ -14,6 +15,10 @@ export default function CustomScrollbar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef(0);
   const dragStartScrollTop = useRef(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 1. Track Scroll Position
   useEffect(() => {
@@ -102,6 +107,8 @@ export default function CustomScrollbar() {
       });
     }
   }, { scope: containerRef, dependencies: [isHovered, isDragging] });
+
+  if (!mounted) return null;
 
   // Update thumb position based on scroll percent
   const trackHeight = typeof window !== 'undefined' ? window.innerHeight - 80 : 500;

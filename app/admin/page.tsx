@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UploadCloud, X, PlusCircle, Trash2, CheckCircle, XCircle, Edit3, MapPin, ZoomIn, ZoomOut, Maximize2, Crosshair } from 'lucide-react';
 import { TransformWrapper, TransformComponent, useControls } from 'react-zoom-pan-pinch';
+import CustomSelect from '@/components/CustomSelect';
 
 type Article = {
   id: string;
@@ -699,17 +700,28 @@ export default function AdminPage() {
             <div className="flex gap-8 flex-col sm:flex-row">
               <div className="flex-1">
                 <label className="block text-xs font-black uppercase tracking-widest text-black mb-2">Language</label>
-                <select value={newArticleLanguage} onChange={e => setNewArticleLanguage(e.target.value)}
-                  className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none rounded-none font-bold">
-                  <option>English</option><option>Hindi</option><option>Telugu</option>
-                </select>
+                <CustomSelect
+                  value={newArticleLanguage}
+                  onChange={setNewArticleLanguage}
+                  options={[
+                    { value: 'English', label: 'English' },
+                    { value: 'Hindi', label: 'Hindi' },
+                    { value: 'Telugu', label: 'Telugu' },
+                  ]}
+                />
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-black uppercase tracking-widest text-black mb-2">Category</label>
-                <select value={newArticleCategory} onChange={e => setNewArticleCategory(e.target.value)}
-                  className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none rounded-none font-bold">
-                  <option>Yadav Kings</option><option>Historical Places</option><option>Culture & Art</option><option>Other</option>
-                </select>
+                <CustomSelect
+                  value={newArticleCategory}
+                  onChange={setNewArticleCategory}
+                  options={[
+                    { value: 'Yadav Kings', label: 'Yadav Kings' },
+                    { value: 'Historical Places', label: 'Historical Places' },
+                    { value: 'Culture & Art', label: 'Culture & Art' },
+                    { value: 'Other', label: 'Other' },
+                  ]}
+                />
               </div>
             </div>
             <div>
@@ -991,15 +1003,14 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-black uppercase tracking-widest text-black mb-1">State</label>
-                      <select
+                      <CustomSelect
                         value={siteStateId}
-                        onChange={e => {
-                          setSiteStateId(e.target.value);
-                          setSiteState(STATE_OPTIONS.find(s => s.id === e.target.value)?.label || '');
+                        onChange={(val) => {
+                          setSiteStateId(val);
+                          setSiteState(STATE_OPTIONS.find(s => s.id === val)?.label || '');
                         }}
-                        className="w-full px-0 py-2 border-b-2 border-gray-300 bg-transparent focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none font-bold text-sm">
-                        {STATE_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                      </select>
+                        options={STATE_OPTIONS.map(s => ({ value: s.id, label: s.label }))}
+                      />
                     </div>
                     <div>
                       <div className="flex justify-between items-end mb-1">

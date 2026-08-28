@@ -13,6 +13,7 @@ type Article = {
   category: string;
   image_url: string;
   created_at: string;
+  reads: number;
 };
 
 function parseInline(text: string) {
@@ -76,7 +77,7 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
       setLoading(true);
       // If it's a dummy ID, generate a mock article
       if (id.startsWith('dummy')) {
-        setArticle({
+        const mockArticle = {
           id: id,
           title: 'The Great Kings of Yadava',
           content: 'The Seuna dynasty, also known as the Yadavas of Devagiri, was an Indian dynasty, which at its peak ruled a kingdom stretching from the Narmada river in the north to the Tungabhadra river in the south, in the western part of the Deccan region.\n\nIts territory included present-day Maharashtra, north Karnataka and parts of Madhya Pradesh, from its capital at Devagiri (present-day Daulatabad in modern Maharashtra).\n\nThe Yadavas initially ruled as feudatories of the Western Chalukyas. Around the middle of the 12th century, as the Chalukya power waned, the Yadava king Bhillama V declared independence. The Yadava kingdom reached its peak under Simhana II, and flourished until the early 14th century, when it was annexed by the Delhi Sultanate.',
@@ -84,8 +85,17 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
           category: 'Yadav Kings',
           image_url: 'https://images.unsplash.com/photo-1599557626941-0f73f2fb7c34?w=1200',
           created_at: new Date().toISOString(),
-        });
+          reads: 42,
+        };
+        setArticle(mockArticle);
         setLoading(false);
+
+        // Track local read for dummy articles too
+        const readArticles = JSON.parse(localStorage.getItem('yadav_read_articles') || '[]');
+        if (!readArticles.includes(id)) {
+          readArticles.push(id);
+          localStorage.setItem('yadav_read_articles', JSON.stringify(readArticles));
+        }
         return;
       }
 
@@ -95,7 +105,24 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
         .eq('id', id)
         .single();
 
-      if (data) setArticle(data);
+      if (data) {
+        let currentReads = data.reads || 0;
+        const readArticles = JSON.parse(localStorage.getItem('yadav_read_articles') || '[]');
+        
+        if (!readArticles.includes(id)) {
+          currentReads += 1;
+          // Increment in DB
+          await supabase
+            .from('articles')
+            .update({ reads: currentReads })
+            .eq('id', id);
+          
+          readArticles.push(id);
+          localStorage.setItem('yadav_read_articles', JSON.stringify(readArticles));
+        }
+        
+        setArticle({ ...data, reads: currentReads });
+      }
       setLoading(false);
     }
     fetchArticle();
@@ -172,8 +199,10 @@ export default function SingleArticlePage({ params }: { params: Promise<{ id: st
             </button>
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-black leading-none tracking-tighter mb-6">{article.title}</h1>
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">
-            Published on {new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs flex items-center gap-4 flex-wrap mt-2">
+            <span>Published on {new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span className="text-black/30">·</span>
+            <span>{article.reads || 0} {article.reads === 1 ? 'Read' : 'Reads'}</span>
           </p>
 
           <ReadAloud content={article.content} language={article.language} />
