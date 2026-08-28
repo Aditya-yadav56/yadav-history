@@ -21,3 +21,12 @@ body {
 .text-3d {
   -webkit-text-stroke: 1px rgba(0,0,0,0.1);
 }
+
+/* Hide default browser scrollbar */
+::-webkit-scrollbar {
+  display: none;
+}
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

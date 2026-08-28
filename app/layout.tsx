@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import CustomScrollbar from "@/components/CustomScrollbar";
 import localFont from "next/font/local";
 
 
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-melody tracking-tighter text-gray-900 bg-[#dedad7]">
         <Navbar />
         <main className="flex-1 flex flex-col">{children}</main>
+        <CustomScrollbar />
       </body>
     </html>
   );
